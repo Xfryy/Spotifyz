@@ -31,6 +31,18 @@ const songSchema = new mongoose.Schema(
 			type: Number,
 			default: 0,
 		},
+		playHistory: [
+			{
+				playedAt: {
+					type: Date,
+					default: Date.now,
+				},
+				count: {
+					type: Number,
+					default: 1,
+				},
+			},
+		],
 	},
 	{
 		timestamps: true,

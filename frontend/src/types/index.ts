@@ -55,3 +55,8 @@ export interface Playlist {
   createdAt: string;
   updatedAt: string;
 }
+
+export type PeriodStats = {
+  period: 'day' | 'week' | 'month' | 'year';
+  plays: number;
+};

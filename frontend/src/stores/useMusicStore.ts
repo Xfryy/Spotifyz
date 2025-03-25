@@ -15,7 +15,6 @@ interface MusicStore {
 	stats: Stats;
 	songStats: any[]; // each item: { _id, title, artist, plays }
 	randomAlbums: Album[];
-
 	fetchAlbums: () => Promise<void>;
 	fetchAlbumById: (id: string) => Promise<void>;
 	fetchFeaturedSongs: () => Promise<void>;
@@ -27,6 +26,8 @@ interface MusicStore {
 	deleteAlbum: (id: string) => Promise<void>;
 	fetchSongStats: () => Promise<void>;
 	fetchRandomAlbums: () => Promise<void>;
+	fetchSongPeriodStats: (songId: string, period: string) => Promise<void>;
+	currentSongPeriodStats: PeriodStats | null;
 }
 
 export const useMusicStore = create<MusicStore>((set) => ({
@@ -46,6 +47,7 @@ export const useMusicStore = create<MusicStore>((set) => ({
 	},
 	songStats: [],
 	randomAlbums: [],
+	currentSongPeriodStats: null,
 
 	deleteSong: async (id) => {
 		set({ isLoading: true, error: null });
@@ -187,6 +189,18 @@ export const useMusicStore = create<MusicStore>((set) => ({
 			// Get 10 random albums
 			const randomAlbums = albums.sort(() => Math.random() - 0.5).slice(0, 10);
 			set((state) => ({ ...state, randomAlbums }));
+		} catch (error: any) {
+			set({ error: error.message });
+		} finally {
+			set({ isLoading: false });
+		}
+	},
+
+	fetchSongPeriodStats: async (songId, period) => {
+		set({ isLoading: true, error: null });
+		try {
+			const response = await axiosInstance.get(`/stats/song-plays?songId=${songId}&period=${period}`);
+			set({ currentSongPeriodStats: response.data });
 		} catch (error: any) {
 			set({ error: error.message });
 		} finally {

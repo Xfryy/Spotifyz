@@ -223,15 +223,29 @@ export const incrementPlay = async (req, res, next) => {
     if (!songId) {
       return res.status(400).json({ message: "songId is required" });
     }
+    
     const updatedSong = await Song.findByIdAndUpdate(
       songId,
-      { $inc: { plays: 1 } },
+      {
+        $inc: { plays: 1 },
+        $push: {
+          playHistory: {
+            playedAt: new Date(),
+            count: 1
+          }
+        }
+      },
       { new: true }
     );
+
     if (!updatedSong) {
       return res.status(404).json({ message: "Song not found" });
     }
-    res.status(200).json({ message: "Play count updated", plays: updatedSong.plays });
+    
+    res.status(200).json({ 
+      message: "Play count updated", 
+      plays: updatedSong.plays 
+    });
   } catch (error) {
     next(error);
   }
