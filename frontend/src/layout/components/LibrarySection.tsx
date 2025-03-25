@@ -7,6 +7,8 @@ import { Link } from "react-router-dom";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import { useState } from "react";
 import LoginModal from "@/components/LoginModal";
+import { Heart } from "lucide-react";
+import { useMusicStore } from "@/stores/useMusicStore";
 
 interface LibrarySectionProps {
     setShowModal: (show: boolean) => void;
@@ -14,6 +16,7 @@ interface LibrarySectionProps {
 
 const LibrarySection = ({ setShowModal }: LibrarySectionProps) => {
     const { playlists, isLoading } = usePlaylistStore();
+    const { likedSongs } = useMusicStore();
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
     return (
@@ -67,6 +70,20 @@ const LibrarySection = ({ setShowModal }: LibrarySectionProps) => {
             <ScrollArea className='h-[calc(100vh-260px)] px-2'>
                 <SignedIn>
                     <div className='space-y-2 p-2'>
+                        <Link
+                            to="/liked-songs"
+                            className='flex items-center gap-3 p-2 rounded-md hover:bg-zinc-800 transition-colors cursor-pointer'
+                        >
+                            <div className='w-10 h-10 rounded flex-shrink-0 bg-gradient-to-br from-purple-700 to-blue-400 flex items-center justify-center'>
+                                <Heart className='w-5 h-5 text-white' />
+                            </div>
+                            <div>
+                                <div className='text-white text-sm font-medium'>Liked Songs</div>
+                                <div className='text-zinc-400 text-xs'>
+                                    {likedSongs.length} songs
+                                </div>
+                            </div>
+                        </Link>
                         {isLoading ? (
                             <PlaylistSkeleton />
                         ) : playlists.length > 0 ? (

@@ -1,24 +1,20 @@
 // components/NowPlayingInfo.tsx
 import { Button } from "@/components/ui/button";
 import { Share2, Heart, Download, Play } from "lucide-react";
-import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useMusicStore } from "@/stores/useMusicStore";
+import { Song } from "@/types";
 import toast from "react-hot-toast";
 
 interface NowPlayingInfoProps {
-  currentSong: {
-    _id: string;
-    title: string;
-    artist: string;
-    imageUrl: string;
-    audioUrl: string;
-  } | null;
+  currentSong: Song | null;
 }
 
 export const NowPlayingInfo = ({ currentSong }: NowPlayingInfoProps) => {
   const { isPro } = useAuthStore();
-  const [isLiked, setIsLiked] = useState(false);
+  const { toggleLikeSong, isLiked } = useMusicStore();
+  const liked = currentSong ? isLiked(currentSong._id) : false;
 
   const handleDownload = async () => {
     if (!currentSong) return;
@@ -33,6 +29,12 @@ export const NowPlayingInfo = ({ currentSong }: NowPlayingInfoProps) => {
       toast.success("Download started!");
     } catch (error) {
       toast.error("Failed to download song");
+    }
+  };
+
+  const handleLike = () => {
+    if (currentSong) {
+      toggleLikeSong(currentSong);
     }
   };
 
@@ -87,10 +89,10 @@ export const NowPlayingInfo = ({ currentSong }: NowPlayingInfoProps) => {
           <Button 
             size="icon" 
             variant="ghost" 
-            className={`hover:text-white ${isLiked ? 'text-spotify-green' : 'text-zinc-400'}`}
-            onClick={() => setIsLiked(!isLiked)}
+            className={`hover:text-white ${liked ? 'text-spotify-green' : 'text-zinc-400'}`}
+            onClick={handleLike}
           >
-            <Heart className={`h-4 w-4 ${isLiked ? 'fill-spotify-green' : ''}`} />
+            <Heart className={`h-4 w-4 ${liked ? 'fill-spotify-green' : ''}`} />
           </Button>
           {/* Download button - Only show for Pro users */}
           {isPro && (

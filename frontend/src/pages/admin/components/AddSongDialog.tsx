@@ -97,6 +97,14 @@ const AddSongDialog = () => {
 				},
 			});
 
+			// Refresh data
+			await Promise.all([
+				useMusicStore.getState().fetchSongs(),
+				useMusicStore.getState().fetchStats(),
+				useMusicStore.getState().fetchSongStats()
+			]);
+
+			// Reset form
 			setNewSong({
 				title: "",
 				artistId: "", // Changed from artist to artistId
@@ -108,6 +116,7 @@ const AddSongDialog = () => {
 				audio: null,
 				image: null,
 			});
+			setSongDialogOpen(false);
 			toast.success("Song added successfully");
 		} catch (error: any) {
 			toast.error("Failed to add song: " + error.message);

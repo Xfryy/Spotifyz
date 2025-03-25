@@ -15,6 +15,7 @@ import { useRef, useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useArtistStore } from "@/stores/useArtistStore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMusicStore } from "@/stores/useMusicStore";
 
 const AddAlbumDialog = () => {
 	const { artists, fetchArtists } = useArtistStore();
@@ -24,7 +25,7 @@ const AddAlbumDialog = () => {
 
 	const [newAlbum, setNewAlbum] = useState({
 		title: "",
-			artistId: "", // Changed from artist to artistId
+		artistId: "", // Changed from artist to artistId
 		releaseYear: new Date().getFullYear(),
 	});
 
@@ -61,9 +62,15 @@ const AddAlbumDialog = () => {
 				},
 			});
 
+			// Refresh data
+			await Promise.all([
+				useMusicStore.getState().fetchAlbums(),
+				useMusicStore.getState().fetchStats()
+			]);
+
 			setNewAlbum({
 				title: "",
-					artistId: "",
+				artistId: "",
 				releaseYear: new Date().getFullYear(),
 			});
 			setImageFile(null);

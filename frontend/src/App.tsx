@@ -14,6 +14,7 @@ import PlaylistsPage from "./pages/Playlists/PlaylistsPage";
 import PlaylistDetailPage from "./pages/Playlists/PlaylistDetailPage/PlaylistDetailPage";
 import UserProfilePage from "@/pages/users/UserProfilePage";
 import ExplorePage from "./pages/explore/ExplorePage";
+import LikedSongs from "./pages/LikedSongs/index";
 
 import { Toaster } from "react-hot-toast";
 import NotFoundPage from "./pages/404/NotFoundPage";
@@ -42,6 +43,7 @@ function App() {
 					<Route path='/playlists' element={<PlaylistsPage />} />
 					<Route path='/playlists/:playlistId' element={<PlaylistDetailPage />} />
 					<Route path='/explore' element={<ExplorePage />} />
+					<Route path='/liked-songs' element={<LikedSongs />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Route>
 			</Routes>

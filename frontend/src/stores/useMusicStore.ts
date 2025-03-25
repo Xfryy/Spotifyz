@@ -1,5 +1,5 @@
 import { axiosInstance } from "@/lib/axios";
-import { Album, Song, Stats } from "@/types";
+import { Album, Song, Stats, PeriodStats } from "@/types";
 import toast from "react-hot-toast";
 import { create } from "zustand";
 
@@ -28,9 +28,12 @@ interface MusicStore {
 	fetchRandomAlbums: () => Promise<void>;
 	fetchSongPeriodStats: (songId: string, period: string) => Promise<void>;
 	currentSongPeriodStats: PeriodStats | null;
+	likedSongs: Song[];
+	toggleLikeSong: (song: Song) => void;
+	isLiked: (songId: string) => boolean;
 }
 
-export const useMusicStore = create<MusicStore>((set) => ({
+export const useMusicStore = create<MusicStore>((set, get) => ({
 	albums: [],
 	songs: [],
 	isLoading: false,
@@ -48,15 +51,18 @@ export const useMusicStore = create<MusicStore>((set) => ({
 	songStats: [],
 	randomAlbums: [],
 	currentSongPeriodStats: null,
+	likedSongs: JSON.parse(localStorage.getItem('likedSongs') || '[]'),
 
 	deleteSong: async (id) => {
 		set({ isLoading: true, error: null });
 		try {
 			await axiosInstance.delete(`/admin/songs/${id}`);
-
-			set((state) => ({
-				songs: state.songs.filter((song) => song._id !== id),
-			}));
+			// Refresh all related data
+			await Promise.all([
+				useMusicStore.getState().fetchSongs(),
+				useMusicStore.getState().fetchStats(),
+				useMusicStore.getState().fetchSongStats()
+			]);
 			toast.success("Song deleted successfully");
 		} catch (error: any) {
 			console.log("Error in deleteSong", error);
@@ -70,12 +76,12 @@ export const useMusicStore = create<MusicStore>((set) => ({
 		set({ isLoading: true, error: null });
 		try {
 			await axiosInstance.delete(`/admin/albums/${id}`);
-			set((state) => ({
-				albums: state.albums.filter((album) => album._id !== id),
-				songs: state.songs.map((song) =>
-					song.albumId === state.albums.find((a) => a._id === id)?.title ? { ...song, album: undefined } : song
-				),
-			}));
+			// Refresh all related data
+			await Promise.all([
+				useMusicStore.getState().fetchAlbums(),
+				useMusicStore.getState().fetchSongs(),
+				useMusicStore.getState().fetchStats()
+			]);
 			toast.success("Album deleted successfully");
 		} catch (error: any) {
 			toast.error("Failed to delete album: " + error.message);
@@ -206,5 +212,21 @@ export const useMusicStore = create<MusicStore>((set) => ({
 		} finally {
 			set({ isLoading: false });
 		}
+	},
+
+	toggleLikeSong: (song) => {
+		set((state) => {
+			const isLiked = state.likedSongs.some(s => s._id === song._id);
+			const newLikedSongs = isLiked
+				? state.likedSongs.filter(s => s._id !== song._id)
+				: [...state.likedSongs, song];
+			
+			localStorage.setItem('likedSongs', JSON.stringify(newLikedSongs));
+			return { likedSongs: newLikedSongs };
+		});
+	},
+
+	isLiked: (songId) => {
+		return get().likedSongs.some(song => song._id === songId);
 	},
 }));

@@ -78,11 +78,19 @@ export const useArtistStore = create<ArtistStore>((set) => ({
   deleteArtist: async (id: string) => {
     try {
       await axiosInstance.delete(`/admin/artists/${id}`);
-      set((state) => ({
-        artists: state.artists.filter((artist) => artist._id !== id)
-      }));
+      // Refresh data after successful deletion
+      const [artistsResponse, statsResponse] = await Promise.all([
+        axiosInstance.get("/admin/artists"),
+        axiosInstance.get("/admin/artists/stats")
+      ]);
+      
+      set({ 
+        artists: artistsResponse.data,
+        stats: statsResponse.data 
+      });
     } catch (error: any) {
       set({ error: error.message });
+      throw error;
     }
   },
 }));

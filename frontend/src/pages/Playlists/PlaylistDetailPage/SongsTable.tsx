@@ -9,6 +9,12 @@ interface Song {
   imageUrl: string;
   duration: number;
   createdAt?: string;
+  albumId?: string; // Add albumId property as optional
+}
+
+interface Album {
+  _id: string;
+  title: string;
 }
 
 interface SongsTableProps {
@@ -18,9 +24,12 @@ interface SongsTableProps {
   isOwner: boolean;
   onPlaySong: (index: number) => void;
   onRemoveSong: (songId: string) => void;
+  formatDuration?: (seconds: number) => string;
+  showCreatedDate?: boolean;
+  albums?: Album[]; // Add this line
 }
 
-const SongsTable = ({ songs, currentSongId, isPlaying, isOwner, onPlaySong, onRemoveSong }: SongsTableProps) => {
+const SongsTable = ({ songs, currentSongId, isPlaying, isOwner, onPlaySong, onRemoveSong, formatDuration, showCreatedDate, albums }: SongsTableProps) => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -35,6 +44,14 @@ const SongsTable = ({ songs, currentSongId, isPlaying, isOwner, onPlaySong, onRe
   return (
     <div className="px-8 py-2 bg-gradient-to-b from-zinc-900/95 to-zinc-900/100">
       <div className="space-y-2">
+        {/* Header row */}
+        <div className="grid grid-cols-[16px_4fr_2fr_1fr] gap-4 px-4 py-2 text-sm text-zinc-400 border-b border-white/5">
+          <div>#</div>
+          <div>Title</div>
+          <div>{showCreatedDate ? "Date Added" : "Album"}</div>
+          <div className="flex justify-end">Duration</div>
+        </div>
+
         {songs.map((song, index) => (
           <div
             key={song._id}
@@ -78,15 +95,20 @@ const SongsTable = ({ songs, currentSongId, isPlaying, isOwner, onPlaySong, onRe
               </div>
             </div>
 
-            {/* Date Added */}
+            {/* Album or Date Added Column */}
             <div className="flex items-center text-zinc-400 text-sm">
-              {formatDate(song.createdAt)}
+              {showCreatedDate ? 
+                formatDate(song.createdAt) : 
+                (song.albumId && albums ? 
+                  albums.find(album => album._id === song.albumId)?.title || "Single" 
+                  : "Single")
+              }
             </div>
 
             {/* Duration and Actions */}
             <div className="flex items-center justify-end gap-4">
               <span className="text-zinc-400 text-sm">
-                {Math.floor(song.duration / 60)}:{String(Math.floor(song.duration % 60)).padStart(2, "0")}
+                {song.duration ? (formatDuration ? formatDuration(song.duration) : `${Math.floor(song.duration / 60)}:${String(Math.floor(song.duration % 60)).padStart(2, "0")}`) : "-"}
               </span>
 
               <DropdownMenu>

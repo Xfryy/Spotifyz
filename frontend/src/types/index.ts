@@ -2,13 +2,14 @@ export interface Song {
   _id: string;
   title: string;
   artist: string;
+  artistId: string;
   imageUrl: string;
   audioUrl: string;
   duration: number;
-  albumId?: string;
-  album?: string;
+  albumId: string;
   createdAt?: string;
   updatedAt?: string;
+  plays?: number;
 }
 
 export interface Album {
@@ -56,7 +57,7 @@ export interface Playlist {
   updatedAt: string;
 }
 
-export type PeriodStats = {
-  period: 'day' | 'week' | 'month' | 'year';
+export interface PeriodStats {
+  period: string;
   plays: number;
-};
+}

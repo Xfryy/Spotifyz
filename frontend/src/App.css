@@ -64,3 +64,44 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
+
+@keyframes logoFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes glowPulse {
+  0% {
+    filter: drop-shadow(0 0 2px #1ed75f) brightness(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 15px #1ed75f) brightness(1.2);
+  }
+  100% {
+    filter: drop-shadow(0 0 2px #1ed75f) brightness(1);
+  }
+}
+
+.logo-animation {
+  animation: logoFadeIn 0.5s ease-out forwards,
+             glowPulse 2s infinite;
+}
+
+.fade-transition {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

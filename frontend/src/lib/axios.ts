@@ -7,7 +7,7 @@ const normalizedBaseURL = baseURL.startsWith('http') ? baseURL : `http://${baseU
 export const axiosInstance = axios.create({
   baseURL: normalizedBaseURL,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 30000, // Increase to 30 seconds
   headers: {
     'Content-Type': 'application/json',
   }
