@@ -11,21 +11,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { axiosInstance } from "@/lib/axios";
 import { Plus, Upload } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useArtistStore } from "@/stores/useArtistStore";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const AddAlbumDialog = () => {
+	const { artists, fetchArtists } = useArtistStore();
 	const [albumDialogOpen, setAlbumDialogOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const [newAlbum, setNewAlbum] = useState({
 		title: "",
-		artist: "",
+			artistId: "", // Changed from artist to artistId
 		releaseYear: new Date().getFullYear(),
 	});
 
 	const [imageFile, setImageFile] = useState<File | null>(null);
+
+	useEffect(() => {
+		fetchArtists();
+	}, [fetchArtists]);
 
 	const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -44,7 +51,7 @@ const AddAlbumDialog = () => {
 
 			const formData = new FormData();
 			formData.append("title", newAlbum.title);
-			formData.append("artist", newAlbum.artist);
+			formData.append("artistId", newAlbum.artistId); // Changed from artist to artistId
 			formData.append("releaseYear", newAlbum.releaseYear.toString());
 			formData.append("imageFile", imageFile);
 
@@ -56,7 +63,7 @@ const AddAlbumDialog = () => {
 
 			setNewAlbum({
 				title: "",
-				artist: "",
+					artistId: "",
 				releaseYear: new Date().getFullYear(),
 			});
 			setImageFile(null);
@@ -117,12 +124,21 @@ const AddAlbumDialog = () => {
 					</div>
 					<div className='space-y-2'>
 						<label className='text-sm font-medium'>Artist</label>
-						<Input
-							value={newAlbum.artist}
-							onChange={(e) => setNewAlbum({ ...newAlbum, artist: e.target.value })}
-							className='bg-zinc-800 border-zinc-700'
-							placeholder='Enter artist name'
-						/>
+						<Select
+							value={newAlbum.artistId}
+							onValueChange={(value) => setNewAlbum({ ...newAlbum, artistId: value })}
+						>
+							<SelectTrigger className='bg-zinc-800 border-zinc-700'>
+								<SelectValue placeholder='Select artist' />
+							</SelectTrigger>
+							<SelectContent className='bg-zinc-800 border-zinc-700'>
+								{artists.map((artist) => (
+									<SelectItem key={artist._id} value={artist._id}>
+										{artist.fullName}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 					<div className='space-y-2'>
 						<label className='text-sm font-medium'>Release Year</label>
@@ -144,7 +160,7 @@ const AddAlbumDialog = () => {
 					<Button
 						onClick={handleSubmit}
 						className='bg-violet-500 hover:bg-violet-600'
-						disabled={isLoading || !imageFile || !newAlbum.title || !newAlbum.artist}
+						disabled={isLoading || !imageFile || !newAlbum.title || !newAlbum.artistId}
 					>
 						{isLoading ? "Creating..." : "Add Album"}
 					</Button>

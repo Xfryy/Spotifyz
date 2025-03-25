@@ -13,12 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { axiosInstance } from "@/lib/axios";
 import { useMusicStore } from "@/stores/useMusicStore";
 import { Plus, Upload } from "lucide-react";
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useArtistStore } from "@/stores/useArtistStore";
 
 interface NewSong {
 	title: string;
-	artist: string;
+	artistId: string; // Changed from artist to artistId
 	album: string;
 	duration: string;
 }
@@ -37,12 +38,13 @@ const getAudioDuration = (file: File): Promise<number> => {
 
 const AddSongDialog = () => {
 	const { albums } = useMusicStore();
+	const { artists, fetchArtists } = useArtistStore(); // Add artist store
 	const [songDialogOpen, setSongDialogOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 
 	const [newSong, setNewSong] = useState<NewSong>({
 		title: "",
-		artist: "",
+			artistId: "", // Changed from artist to artistId
 		album: "",
 		duration: "0",
 	});
@@ -64,6 +66,11 @@ const AddSongDialog = () => {
     setNewSong((prev) => ({ ...prev, duration: String(Math.floor(duration)) }));
   }, []);
 
+	// Add useEffect to fetch artists
+	useEffect(() => {
+		fetchArtists();
+	}, [fetchArtists]);
+
 	const handleSubmit = async () => {
 		setIsLoading(true);
 
@@ -75,7 +82,7 @@ const AddSongDialog = () => {
 			const formData = new FormData();
 
 			formData.append("title", newSong.title);
-			formData.append("artist", newSong.artist);
+			formData.append("artistId", newSong.artistId); // Changed from artist to artistId
 			formData.append("duration", newSong.duration);
 			if (newSong.album && newSong.album !== "none") {
 				formData.append("albumId", newSong.album);
@@ -92,7 +99,7 @@ const AddSongDialog = () => {
 
 			setNewSong({
 				title: "",
-				artist: "",
+				artistId: "", // Changed from artist to artistId
 				album: "",
 				duration: "0",
 			});
@@ -186,13 +193,24 @@ const AddSongDialog = () => {
 						/>
 					</div>
 
+					{/* Replace artist input with Select */}
 					<div className='space-y-2'>
 						<label className='text-sm font-medium'>Artist</label>
-						<Input
-							value={newSong.artist}
-							onChange={(e) => setNewSong({ ...newSong, artist: e.target.value })}
-							className='bg-zinc-800 border-zinc-700'
-						/>
+						<Select
+							value={newSong.artistId}
+							onValueChange={(value) => setNewSong({ ...newSong, artistId: value })}
+						>
+							<SelectTrigger className='bg-zinc-800 border-zinc-700'>
+								<SelectValue placeholder='Select artist' />
+							</SelectTrigger>
+							<SelectContent className='bg-zinc-800 border-zinc-700'>
+								{artists.map((artist) => (
+									<SelectItem key={artist._id} value={artist._id}>
+										{artist.fullName}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 
           <div className='space-y-2'>
@@ -227,10 +245,17 @@ const AddSongDialog = () => {
 				</div>
 
 				<DialogFooter>
-					<Button variant='outline' onClick={() => setSongDialogOpen(false)} disabled={isLoading}>
+					<Button 
+						variant='outline' 
+						onClick={() => setSongDialogOpen(false)} 
+						disabled={isLoading}
+					>
 						Cancel
 					</Button>
-					<Button onClick={handleSubmit} disabled={isLoading}>
+					<Button 
+						onClick={handleSubmit} 
+						disabled={isLoading || !newSong.artistId} // Add artistId check
+					>
 						{isLoading ? "Uploading..." : "Add Song"}
 					</Button>
 				</DialogFooter>

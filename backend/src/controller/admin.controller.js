@@ -1,6 +1,7 @@
 import { Song } from "../models/song.model.js";
 import { Album } from "../models/album.model.js";
 import cloudinary from "../lib/cloudinary.js";
+import { Artist } from "../models/artist.model.js";
 
 // helper function for cloudinary uploads
 const uploadToCloudinary = async (file) => {
@@ -47,40 +48,45 @@ const deleteFromCloudinary = async (url, resourceType = 'image') => {
 };
 
 export const createSong = async (req, res, next) => {
-	try {
-		if (!req.files || !req.files.audioFile || !req.files.imageFile) {
-			return res.status(400).json({ message: "Please upload all files" });
-		}
+    try {
+        if (!req.files || !req.files.audioFile || !req.files.imageFile) {
+            return res.status(400).json({ message: "Please upload all files" });
+        }
 
-		const { title, artist, albumId, duration } = req.body;
-		const audioFile = req.files.audioFile;
-		const imageFile = req.files.imageFile;
+        const { title, artistId, albumId, duration } = req.body;
 
-		const audioUrl = await uploadToCloudinary(audioFile);
-		const imageUrl = await uploadToCloudinary(imageFile);
+        // Validate artist exists
+        const artist = await Artist.findById(artistId);
+        if (!artist) {
+            return res.status(404).json({ message: "Artist not found" });
+        }
 
-		const song = new Song({
-			title,
-			artist,
-			audioUrl,
-			imageUrl,
-			duration,
-			albumId: albumId || null,
-		});
+        const audioUrl = await uploadToCloudinary(req.files.audioFile);
+        const imageUrl = await uploadToCloudinary(req.files.imageFile);
 
-		await song.save();
+        const song = new Song({
+            title,
+            artistId,
+            artist: artist.fullName, // Store artist name for quick access
+            audioUrl,
+            imageUrl,
+            duration,
+            albumId: albumId || null,
+        });
 
-		// if song belongs to an album, update the album's songs array
-		if (albumId) {
-			await Album.findByIdAndUpdate(albumId, {
-				$push: { songs: song._id },
-			});
-		}
-		res.status(201).json(song);
-	} catch (error) {
-		console.log("Error in createSong", error);
-		next(error);
-	}
+        await song.save();
+
+        if (albumId) {
+            await Album.findByIdAndUpdate(albumId, {
+                $push: { songs: song._id },
+            });
+        }
+        
+        res.status(201).json(song);
+    } catch (error) {
+        console.log("Error in createSong", error);
+        next(error);
+    }
 };
 
 export const deleteSong = async (req, res, next) => {
@@ -113,16 +119,24 @@ export const deleteSong = async (req, res, next) => {
 
 export const createAlbum = async (req, res, next) => {
 	try {
-		const { title, artist, releaseYear } = req.body;
+		const { title, artistId, releaseYear } = req.body;
 		const { imageFile } = req.files;
+
+		// Validate artist exists
+		const artist = await Artist.findById(artistId);
+		if (!artist) {
+			return res.status(404).json({ message: "Artist not found" });
+		}
 
 		const imageUrl = await uploadToCloudinary(imageFile);
 
 		const album = new Album({
 			title,
-			artist,
+			artistId,
+			artist: artist.fullName, // Get artist name from database
 			imageUrl,
 			releaseYear,
+			songs: []
 		});
 
 		await album.save();

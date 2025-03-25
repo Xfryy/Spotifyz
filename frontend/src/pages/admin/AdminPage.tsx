@@ -1,11 +1,12 @@
 import { useAuthStore } from "@/stores/useAuthStore";
 import Header from "./components/Header";
 import DashboardStats from "./components/DashboardStats";
-import { Album, Music, BarChart3 } from "lucide-react";
+import { Album, Music, BarChart3, Mic2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SongsTabContent from "./components/SongsTabContent";
 import AlbumsTabContent from "./components/AlbumsTabContent";
 import SongStatsTabContent from "./components/SongStatsTabContent";
+import ArtistsTabContent from "./components/ArtistsTabContent";
 import { useEffect } from "react";
 import { useMusicStore } from "@/stores/useMusicStore";
 
@@ -36,6 +37,10 @@ const AdminPage = () => {
             <Album className="mr-2 size-4" />
             Albums
           </TabsTrigger>
+          <TabsTrigger value="artists" className="data-[state=active]:bg-zinc-700">
+            <Mic2 className="mr-2 size-4" />
+            Artists
+          </TabsTrigger>
           <TabsTrigger value="stats" className="data-[state=active]:bg-zinc-700">
             <BarChart3 className="mr-2 size-4" />
             Song Stats
@@ -50,6 +55,9 @@ const AdminPage = () => {
         </TabsContent>
         <TabsContent value="stats">
           <SongStatsTabContent />
+        </TabsContent>
+        <TabsContent value="artists">
+          <ArtistsTabContent />
         </TabsContent>
       </Tabs>
     </div>
