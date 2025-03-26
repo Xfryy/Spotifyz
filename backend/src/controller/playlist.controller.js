@@ -46,7 +46,14 @@ export const getPlaylistsByUser = async (req, res, next) => {
 
 export const getPlaylistById = async (req, res, next) => {
   try {
-    const playlist = await Playlist.findById(req.params.id).populate("songs");
+    const playlist = await Playlist.findById(req.params.id)
+      .populate({
+        path: 'songs',
+        populate: {
+          path: 'albumId',
+          select: 'title'
+        }
+      });
     
     if (!playlist) {
       return res.status(404).json({ message: "Playlist not found" });

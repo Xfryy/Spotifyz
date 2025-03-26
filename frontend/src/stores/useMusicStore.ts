@@ -31,6 +31,7 @@ interface MusicStore {
 	likedSongs: Song[];
 	toggleLikeSong: (song: Song) => void;
 	isLiked: (songId: string) => boolean;
+	songPeriodStats: { [key: string]: { [key: string]: number } };  // New state for tracking all songs
 }
 
 export const useMusicStore = create<MusicStore>((set, get) => ({
@@ -52,6 +53,7 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 	randomAlbums: [],
 	currentSongPeriodStats: null,
 	likedSongs: JSON.parse(localStorage.getItem('likedSongs') || '[]'),
+	songPeriodStats: {},
 
 	deleteSong: async (id) => {
 		set({ isLoading: true, error: null });
@@ -206,7 +208,16 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 		set({ isLoading: true, error: null });
 		try {
 			const response = await axiosInstance.get(`/stats/song-plays?songId=${songId}&period=${period}`);
-			set({ currentSongPeriodStats: response.data });
+			set((state) => ({
+				songPeriodStats: {
+					...state.songPeriodStats,
+					[songId]: {
+						...(state.songPeriodStats[songId] || {}),
+						[period]: response.data.plays
+					}
+				}
+			}));
+			return response.data;
 		} catch (error: any) {
 			set({ error: error.message });
 		} finally {

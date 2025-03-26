@@ -5,20 +5,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMusicStore } from "@/stores/useMusicStore";
 
 const SongStatsTabContent = () => {
-  const { songStats, fetchSongStats, isLoading, error, fetchSongPeriodStats, currentSongPeriodStats } = useMusicStore();
+  const { songStats, fetchSongStats, isLoading, error, fetchSongPeriodStats, songPeriodStats } = useMusicStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("day");
-  const [selectedSongId, setSelectedSongId] = useState("");
 
   useEffect(() => {
     fetchSongStats();
   }, [fetchSongStats]);
 
   const handlePeriodChange = async (songId: string, period: string) => {
-    setSelectedSongId(songId);
-    setSelectedPeriod(period);
-    await fetchSongPeriodStats(songId, period);
+    if (!songPeriodStats[songId]?.[period]) {
+      await fetchSongPeriodStats(songId, period);
+    }
   };
+
+  useEffect(() => {
+    const fetchAllSongStats = async () => {
+      for (const song of songStats) {
+        if (!songPeriodStats[song._id]?.[selectedPeriod]) {
+          await fetchSongPeriodStats(song._id, selectedPeriod);
+        }
+      }
+    };
+    if (songStats.length > 0) {
+      fetchAllSongStats();
+    }
+  }, [selectedPeriod, songStats]);
 
   const filteredSongs = songStats.filter((song: any) =>
     song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -35,9 +47,22 @@ const SongStatsTabContent = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Song Statistics</CardTitle>
-        <CardDescription>Track plays for each song by period</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Song Statistics</CardTitle>
+          <CardDescription>Track plays for each song by period</CardDescription>
+        </div>
+        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="day">Today</SelectItem>
+            <SelectItem value="week">This Week</SelectItem>
+            <SelectItem value="month">This Month</SelectItem>
+            <SelectItem value="year">This Year</SelectItem>
+          </SelectContent>
+        </Select>
       </CardHeader>
       <CardContent>
         <div className="mb-4">
@@ -55,7 +80,6 @@ const SongStatsTabContent = () => {
               <TableHead>Image</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Artist</TableHead>
-              <TableHead>Period</TableHead>
               <TableHead className="text-right">Plays</TableHead>
             </TableRow>
           </TableHeader>
@@ -67,26 +91,8 @@ const SongStatsTabContent = () => {
                 </TableCell>
                 <TableCell className="font-medium">{song.title}</TableCell>
                 <TableCell>{song.artist}</TableCell>
-                <TableCell>
-                  <Select
-                    value={selectedSongId === song._id ? selectedPeriod : 'day'}
-                    onValueChange={(value) => handlePeriodChange(song._id, value)}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="day">Today</SelectItem>
-                      <SelectItem value="week">This Week</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                      <SelectItem value="year">This Year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
                 <TableCell className="text-right">
-                  {selectedSongId === song._id && currentSongPeriodStats
-                    ? currentSongPeriodStats.plays
-                    : song.plays || 0}
+                  {songPeriodStats[song._id]?.[selectedPeriod] ?? song.plays ?? 0}
                 </TableCell>
               </TableRow>
             ))}

@@ -9,7 +9,10 @@ interface Song {
   imageUrl: string;
   duration: number;
   createdAt?: string;
-  albumId?: string; // Add albumId property as optional
+  albumId?: {
+    _id: string;
+    title: string;
+  };
 }
 
 interface Album {
@@ -99,9 +102,7 @@ const SongsTable = ({ songs, currentSongId, isPlaying, isOwner, onPlaySong, onRe
             <div className="flex items-center text-zinc-400 text-sm">
               {showCreatedDate ? 
                 formatDate(song.createdAt) : 
-                (song.albumId && albums ? 
-                  albums.find(album => album._id === song.albumId)?.title || "Single" 
-                  : "Single")
+                (song.albumId ? song.albumId.title : "Single")
               }
             </div>
 

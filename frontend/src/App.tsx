@@ -14,7 +14,7 @@ import PlaylistsPage from "./pages/Playlists/PlaylistsPage";
 import PlaylistDetailPage from "./pages/Playlists/PlaylistDetailPage/PlaylistDetailPage";
 import UserProfilePage from "@/pages/users/UserProfilePage";
 import ExplorePage from "./pages/explore/ExplorePage";
-import LikedSongs from "./pages/LikedSongs/index";
+import LikedSongs from "./pages/LikedSongs/LikedSongsPage";
 
 import { Toaster } from "react-hot-toast";
 import NotFoundPage from "./pages/404/NotFoundPage";
