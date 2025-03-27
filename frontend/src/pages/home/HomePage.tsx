@@ -34,7 +34,6 @@ const HomePage = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { user } = useUser();
   const [publicPlaylists, setPublicPlaylists] = useState([]);
-  const [recentlyPlayed, setRecentlyPlayed] = useState([]);
   const [greeting, setGreeting] = useState("Good morning");
   
   useEffect(() => {
@@ -47,18 +46,8 @@ const HomePage = () => {
     // Fetch user playlists if needed
     if (user) {
       fetchPlaylists();
-      fetchRecentlyPlayed();
     }
   }, [user, fetchPlaylists]);
-
-  const fetchRecentlyPlayed = async () => {
-    try {
-      const response = await axiosInstance.get("/user/recently-played");
-      setRecentlyPlayed(response.data);
-    } catch (error) {
-      console.error("Failed to fetch recently played:", error);
-    }
-  };
 
   useEffect(() => {
     const fetchPublicPlaylists = async () => {
@@ -209,15 +198,6 @@ const HomePage = () => {
             <HuTaoMusicBanner />
             
             <div className='space-y-8 mt-8'>
-              {/* Recently Played Section */}
-              {recentlyPlayed?.length > 0 && 
-                <SectionGrid 
-                  title='Recently Played' 
-                  songs={recentlyPlayed} 
-                  isLoading={isLoading} 
-                />
-              }
-            
               {/* Your Playlists Section */}
               {playlists?.length > 0 && renderCollectionGrid(
                 playlists, 

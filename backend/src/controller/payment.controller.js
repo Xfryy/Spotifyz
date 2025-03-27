@@ -73,104 +73,81 @@ export const createCheckoutSession = async (req, res) => {
 };
 
 export const handleWebhook = async (req, res) => {
+  const sig = req.headers['stripe-signature'];
   let event;
 
   try {
-    const sig = req.headers['stripe-signature'];
-    const payload = req.rawBody;
-
-    console.log('🔄 Processing webhook:', {
-      hasSignature: !!sig,
-      payloadSize: payload?.length,
-      secret: process.env.STRIPE_WEBHOOK_SECRET?.slice(0,4) + '...'
+    console.log('🔍 Constructing webhook event...');
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+    
+    console.log('✅ Event constructed successfully:', {
+      type: event.type,
+      id: event.id
     });
 
-    try {
-      event = stripe.webhooks.constructEvent(
-        payload,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
-    } catch (err) {
-      console.error('❌ Webhook verification failed:', {
-        error: err.message,
-        signature: sig?.slice(0,10) + '...',
-        payloadPreview: payload?.slice(0,20) + '...'
-      });
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    console.log('🎉 Webhook received:', event.type);
-
-    // Get the object from the event
-    const object = event.data.object;
-
+    // Get event data
+    const data = event.data.object;
+    
+    // Handle the event
     switch (event.type) {
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-      case 'checkout.session.completed':
-      case 'invoice.paid':
-      case 'invoice.payment_succeeded': {
-        // Get the subscription and customer details
-        const subscriptionId = object.subscription || object.id;
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-        const customerId = object.customer;
+      case 'checkout.session.completed': {
+        const session = data;
+        console.log('💳 Checkout completed:', {
+          customerId: session.customer,
+          sessionId: session.id,
+          subscriptionId: session.subscription
+        });
         
-        // Get clerkId from metadata
-        const clerkId = subscription.metadata.clerkId || 
-                       object.metadata?.clerkId;
-
+        // Get user from metadata
+        const clerkId = session.metadata?.clerkId;
         if (!clerkId) {
-          console.error('No clerkId found in metadata:', object);
-          return res.status(400).json({ error: 'No clerkId found' });
+          throw new Error('No clerkId found in session metadata');
         }
 
-        // Update user status
-        const updateResult = await User.findOneAndUpdate(
-          { clerkId },
-          {
-            isPro: true,
-            stripeCustomerId: customerId,
-            stripeSubscriptionId: subscriptionId,
-            subscriptionStatus: subscription.status,
-            updatedAt: new Date()
-          },
-          { new: true }
-        );
+        // Update user with retries
+        let retries = 3;
+        while (retries > 0) {
+          try {
+            const user = await User.findOneAndUpdate(
+              { clerkId },
+              { 
+                isPro: true,
+                stripeCustomerId: session.customer,
+                stripeSubscriptionId: session.subscription,
+                subscriptionStatus: 'active'
+              },
+              { new: true }
+            );
 
-        console.log('✅ User updated:', {
-          clerkId,
-          isPro: updateResult?.isPro,
-          event: event.type
-        });
+            console.log('👤 User updated:', {
+              clerkId,
+              isPro: user.isPro,
+              customerId: user.stripeCustomerId
+            });
+            break;
+          } catch (err) {
+            retries--;
+            if (retries === 0) throw err;
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
         break;
       }
 
-      case 'invoice.created':
-      case 'invoice.finalized':
-      case 'invoice.updated':
-        // Log these events but no action needed
-        console.log(`📋 Invoice event: ${event.type}`);
-        break;
-
-      case 'payment_intent.created':
-      case 'payment_intent.succeeded':
-        // Log payment events
-        console.log(`💰 Payment event: ${event.type}`);
-        break;
-
+      // Handle other events...
       default:
-        console.log(`⚠️ Unhandled event type: ${event.type}`);
+        console.log(`🤔 Unhandled event type: ${event.type}`);
     }
 
-    res.json({
-      received: true,
-      type: event.type,
-      object: object.object
-    });
+    // Return success
+    res.json({ received: true, type: event.type });
   } catch (err) {
-    console.error('❌ Webhook processing error:', err);
-    res.status(400).json({ error: err.message });
+    console.error('💥 Webhook error:', err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
   }
 };
 

@@ -3,7 +3,7 @@ import { Song } from "../models/song.model.js";
 
 export const getAllAlbums = async (req, res, next) => {
   try {
-    const albums = await Album.find();
+    const albums = await Album.find().populate('songs');
     res.status(200).json(albums);
   } catch (error) {
     next(error);

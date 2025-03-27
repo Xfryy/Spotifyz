@@ -1,4 +1,4 @@
-// components/NowPlayingInfo.tsx
+// components/Musicinfo.tsx
 import { Button } from "@/components/ui/button";
 import { Share2, Heart, Download, Play } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -7,11 +7,11 @@ import { useMusicStore } from "@/stores/useMusicStore";
 import { Song } from "@/types";
 import toast from "react-hot-toast";
 
-interface NowPlayingInfoProps {
+interface MusicinfoProps {
   currentSong: Song | null;
 }
 
-export const NowPlayingInfo = ({ currentSong }: NowPlayingInfoProps) => {
+export const Musicinfo = ({ currentSong }: MusicinfoProps) => {
   const { isPro } = useAuthStore();
   const { toggleLikeSong, isLiked } = useMusicStore();
   const liked = currentSong ? isLiked(currentSong._id) : false;

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useUser } from "@clerk/clerk-react";
 import ImprovedAdPopup from "@/components/AdPopup";
-import { NowPlayingInfo } from "@/components/NowPlayingInfo";
+import { Musicinfo } from "@/components/MusicInfo";
 import { PlaybackButtons } from "@/components/PlaybackButtons";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PlaybackVolumeControls } from "@/layout/components/PlaybackVolumeControls";
@@ -105,7 +105,7 @@ export const PlaybackControls = () => {
 			<footer className='h-20 sm:h-24 bg-gradient-to-b from-zinc-900 to-black border-t border-zinc-800/40 px-4 sticky bottom-0'>
 				<div className='flex justify-between items-center h-full max-w-[1800px] mx-auto'>
 					{/* Currently playing song */}
-					<NowPlayingInfo currentSong={currentSong} />
+					<Musicinfo currentSong={currentSong} />
 
 					{/* Player controls */}
 					<div className='flex flex-col items-center gap-2 flex-1 max-w-full sm:max-w-[45%]'>

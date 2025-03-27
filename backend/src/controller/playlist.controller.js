@@ -13,9 +13,14 @@ export const createPlaylist = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (req.files?.image) {
-      const result = await cloudinary.uploader.upload(req.files.image.tempFilePath);
-      imageUrl = result.secure_url;
+    try {
+      if (req.files?.image) {
+        const result = await cloudinary.uploader.upload(req.files.image.tempFilePath);
+        imageUrl = result.secure_url;
+      }
+    } catch (error) {
+      console.error("Error uploading image to Cloudinary:", error);
+      return res.status(500).json({ message: "Failed to upload image to Cloudinary" });
     }
 
     const playlist = await Playlist.create({
@@ -85,9 +90,14 @@ export const updatePlaylist = async (req, res, next) => {
     const { title, description, isPublic } = req.body;
     let imageUrl = playlist.imageUrl;
 
-    if (req.files?.image) {
-      const result = await cloudinary.uploader.upload(req.files.image.tempFilePath);
-      imageUrl = result.secure_url;
+    try {
+      if (req.files?.image) {
+        const result = await cloudinary.uploader.upload(req.files.image.tempFilePath);
+        imageUrl = result.secure_url;
+      }
+    } catch (error) {
+      console.error("Error uploading image to Cloudinary:", error);
+      return res.status(500).json({ message: "Failed to upload image to Cloudinary" });
     }
 
     Object.assign(playlist, {

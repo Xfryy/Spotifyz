@@ -30,7 +30,7 @@ const PORT = process.env.PORT;
 const httpServer = createServer(app);
 initializeSocket(httpServer);
 
-// Configure CORS before any routes
+// Configure CORS options first
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? [
@@ -44,25 +44,47 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'clerk-token', 'stripe-signature']
 };
 
+// Add this before any other middleware
+app.use((req, res, next) => {
+  if (req.originalUrl === '/webhook') {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
+
+// Move CORS after the raw body parser
 app.use(cors(corsOptions));
 
-// Configure webhook route with raw body parsing
-app.post('/api/webhook', 
+// Configure webhook route first, before any other middleware
+app.post('/webhook', 
   express.raw({type: 'application/json'}),
-  async (req, res, next) => {
+  async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    
+    console.log('📥 Webhook received:', {
+      contentType: req.headers['content-type'],
+      hasSignature: !!sig,
+      bodySize: req.body?.length,
+      path: req.path,
+      method: req.method
+    });
+
+    if (!sig) {
+      console.error('❌ No Stripe signature found');
+      return res.status(400).send('No Stripe signature');
+    }
+
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error('❌ No webhook secret configured');
+      return res.status(500).send('Webhook secret not configured');
+    }
+
     try {
-      console.log('💡 Webhook received:', {
-        signature: req.headers['stripe-signature'],
-        contentType: req.headers['content-type'],
-        method: req.method,
-        path: req.path
-      });
-      
-      req.rawBody = req.body;
       await handleWebhook(req, res);
-    } catch (error) {
-      console.error('⚠️ Webhook error:', error);
-      res.status(500).json({ error: error.message });
+    } catch (err) {
+      console.error('❌ Webhook handler error:', err);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
     }
   }
 );

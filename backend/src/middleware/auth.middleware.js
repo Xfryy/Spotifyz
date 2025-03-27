@@ -1,5 +1,6 @@
 import { clerkClient } from "@clerk/express";
 import { Playlist } from "../models/playlist.model.js";
+import { User } from "../models/user.model.js";
 
 export const protectRoute = async (req, res, next) => {
   if (!req.auth?.userId) {
@@ -10,15 +11,32 @@ export const protectRoute = async (req, res, next) => {
 
 export const requireAdmin = async (req, res, next) => {
   try {
-    const currentUser = await clerkClient.users.getUser(req.auth.userId);
-    const isAdmin = process.env.ADMIN_EMAIL === currentUser.primaryEmailAddress?.emailAddress;
-
-    if (!isAdmin) {
-      return res.status(403).json({ message: "Admin access required" });
+    const user = await User.findOne({ clerkId: req.auth.userId });
+    
+    if (!user) {
+      console.log('Admin check failed: User not found', req.auth.userId);
+      return res.status(403).json({ 
+        message: "Unauthorized: User not found",
+        error: "NO_USER"
+      });
     }
+
+    if (!user.isAdmin) {
+      console.log('Admin check failed: Not an admin', user.clerkId);
+      return res.status(403).json({ 
+        message: "Unauthorized: Not an admin",
+        error: "NOT_ADMIN"
+      });
+    }
+
+    req.user = user;
     next();
   } catch (error) {
-    next(error);
+    console.error('Admin middleware error:', error);
+    res.status(500).json({ 
+      message: "Internal server error",
+      error: "SERVER_ERROR"
+    });
   }
 };
 

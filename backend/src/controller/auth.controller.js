@@ -4,7 +4,7 @@ import { clerkClient } from "@clerk/express";
 export const authCallback = async (req, res, next) => {
 	try {
 		// Get the Clerk user ID from request
-		const { id, firstName, lastName, imageUrl, email } = req.body;
+		const { id, firstName, lastName, imageUrl } = req.body;
 
 		// Ensure we have a valid Clerk ID
 		if (!id) {
@@ -15,23 +15,10 @@ export const authCallback = async (req, res, next) => {
 		}
 
 		// Verify if this user exists in Clerk
+		let clerkUser;
 		try {
 			// This will throw an error if user doesn't exist
-			const clerkUser = await clerkClient.users.getUser(id);
-			
-			// Check if email is verified for email logins
-			if (email && clerkUser.emailAddresses && clerkUser.emailAddresses.length > 0) {
-				const primaryEmail = clerkUser.emailAddresses.find(
-					emailObj => emailObj.emailAddress === email
-				);
-				
-				if (!primaryEmail || primaryEmail.verification.status !== "verified") {
-					return res.status(400).json({
-						success: false,
-						message: "Email address not verified. Please verify your email first."
-					});
-				}
-			}
+			clerkUser = await clerkClient.users.getUser(id);
 		} catch (error) {
 			console.log("Error verifying Clerk user:", error);
 			return res.status(401).json({
@@ -47,6 +34,18 @@ export const authCallback = async (req, res, next) => {
 		
 		// Check if user already exists in our database
 		let user = await User.findOne({ clerkId: id });
+
+		let email = null;
+		if (clerkUser.emailAddresses && clerkUser.emailAddresses.length > 0) {
+			const primaryEmail = clerkUser.emailAddresses.find(
+				emailObj => emailObj.primary
+			);
+			if (primaryEmail) {
+				email = primaryEmail.emailAddress;
+			} else {
+				email = clerkUser.emailAddresses[0].emailAddress;
+			}
+		}
 
 		if (!user) {
 			// New user signup

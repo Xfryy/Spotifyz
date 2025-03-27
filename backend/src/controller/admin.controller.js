@@ -1,5 +1,6 @@
 import { Song } from "../models/song.model.js";
 import { Album } from "../models/album.model.js";
+import { User } from "../models/user.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { Artist } from "../models/artist.model.js";
 
@@ -181,8 +182,51 @@ export const deleteAlbum = async (req, res, next) => {
 	}
 };
 
-export const checkAdmin = async (req, res, next) => {
-	res.status(200).json({ admin: true });
+import { config } from 'dotenv';
+config();
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+
+export const checkAdmin = async (req, res) => {
+  try {
+    if (!req.auth?.userId) {
+      return res.status(401).json({
+        admin: false,
+        message: "Authentication required"
+      });
+    }
+
+    const user = await User.findOne({ clerkId: req.auth.userId });
+
+    if (!user) {
+      console.log('Admin check - User not found:', req.auth.userId);
+      return res.status(404).json({
+        admin: false,
+        message: "User not found"
+      });
+    }
+
+    const isAdmin = user.email === ADMIN_EMAIL;
+    user.isAdmin = isAdmin;
+    await user.save();
+
+    console.log('Admin check result:', {
+      userId: user.clerkId,
+      isAdmin: isAdmin
+    });
+
+    res.json({
+      admin: isAdmin,
+      userId: user.clerkId
+    });
+  } catch (error) {
+    console.error('Admin check error:', error);
+    res.status(500).json({
+      admin: false,
+      message: "Failed to check admin status",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 };
 
 export const getSongStats = async (req, res, next) => {

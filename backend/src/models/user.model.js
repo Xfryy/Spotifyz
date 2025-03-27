@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema(
 			required: true,
 			unique: true,
 		},
+		email: {
+			type: String,
+			required: false,
+		},
 		isPro: {
 			type: Boolean,
 			default: false
@@ -31,6 +35,10 @@ const userSchema = new mongoose.Schema(
 			type: String,
 			enum: ['active', 'canceled', 'past_due', null],
 			default: null
+		},
+		isAdmin: {
+			type: Boolean,
+			default: false
 		}
 	},
 	{ timestamps: true }

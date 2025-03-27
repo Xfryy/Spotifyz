@@ -4,6 +4,7 @@ import { Album } from "../models/album.model.js";
 import { Playlist } from "../models/playlist.model.js"; // Tambah ini
 import path from 'path';
 import fs from 'fs/promises';
+import { addRecentlyPlayed } from "./recentlyPlayed.controller.js";
 
 const BACKEND_URL = process.env.NODE_ENV === 'production' ? process.env.BACKEND_URL : 'http://localhost:5000';
 
